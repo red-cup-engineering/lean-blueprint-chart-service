@@ -7,7 +7,7 @@
     "url": "git+https://github.com/red-cup-engineering/lean-blueprint-chart-service.git"
   },
   "type": "module",
-  "license": "LicenseRef-561Group-1.0",
+  "license": "MIT",
   "exports": "./src/lean-blueprint-chart.mjs",
   "files": [
     "src/",
@@ -20,5 +20,9 @@
   },
   "engines": {
     "node": ">=22"
+  },
+  "funding": {
+    "type": "individual",
+    "url": "https://github.com/561-group/.github/blob/main/TIPS.md"
   }
 }
