@@ -66,7 +66,7 @@ function stripLeanComments(text) {
   return output;
 }
 
-function qualifyLeanName(name, namespaceStack) {
+function validateLeanName(name, namespaceStack) {
   if (name.includes(".") || namespaceStack.length === 0) return name;
   return `${namespaceStack.join(".")}.${name}`;
 }
@@ -96,7 +96,7 @@ function decodeLeanDeclarations(text, module, source) {
       current = {
         module,
         source,
-        name: qualifyLeanName(match[2], namespaceStack),
+        name: validateLeanName(match[2], namespaceStack),
         kind,
         line: offset + 1,
         proofStatus: kind === "axiom" || kind === "constant" ? "assumed" : "proved",
@@ -315,25 +315,25 @@ export function blueprintClaimGraphFindings(graph, options = {}) {
 
 export function blueprintLeanWeldFindings(graph, declarationCatalog) {
   const declarations = new Map(declarationCatalog.entries.map((entry) => [entry.name, entry]));
-  const admittedNames = new Set(declarationCatalog.entries.filter((entry) => ["admitted", "assumed"].includes(entry.proofStatus)).map((entry) => entry.name));
+  const validatedNames = new Set(declarationCatalog.entries.filter((entry) => ["admitted", "assumed"].includes(entry.proofStatus)).map((entry) => entry.name));
   const nodes = new Map(graph.nodes.map((node) => [node.id, node]));
   const uses = new Map();
   for (const edge of graph.edges) uses.set(edge.from, [...(uses.get(edge.from) ?? []), edge.to]);
-  const admittedLabels = new Set();
+  const validatedLabels = new Set();
   const findings = [];
   for (const node of graph.nodes) {
     for (const name of node.leanDeclarations) {
-      if (admittedNames.has(name)) admittedLabels.add(node.id);
+      if (validatedNames.has(name)) validatedLabels.add(node.id);
       if (!declarations.has(name)) findings.push(finding("unmatched-lean-reference", "warning", `Lean reference ${name} does not resolve to a cataloged declaration`, node));
     }
   }
   const memo = new Map();
-  const reachesAdmitted = (id, stack = new Set()) => {
-    if (admittedLabels.has(id)) return true;
+  const reachesValidated = (id, stack = new Set()) => {
+    if (validatedLabels.has(id)) return true;
     if (memo.has(id)) return memo.get(id);
     if (stack.has(id) || !nodes.has(id)) return false;
     stack.add(id);
-    const reaches = (uses.get(id) ?? []).some((used) => reachesAdmitted(used, stack));
+    const reaches = (uses.get(id) ?? []).some((used) => reachesValidated(used, stack));
     stack.delete(id);
     memo.set(id, reaches);
     return reaches;
@@ -342,9 +342,9 @@ export function blueprintLeanWeldFindings(graph, declarationCatalog) {
     for (const name of node.leanDeclarations) {
       const declaration = declarations.get(name);
       if (declaration === undefined) continue;
-      const admitted = ["admitted", "assumed"].includes(declaration.proofStatus);
-      if (admitted && node.status === "settled") findings.push(finding("green-admitted", "error", `settled node references admitted Lean declaration ${name}`, node));
-      if (!admitted && node.status === "frontier" && !reachesAdmitted(node.id)) findings.push(finding("red-settled", "warning", `frontier node references a proved Lean declaration ${name} with no admitted upstream`, node));
+      const validated = ["admitted", "assumed"].includes(declaration.proofStatus);
+      if (validated && node.status === "settled") findings.push(finding("green-admitted", "error", `settled node references admitted Lean declaration ${name}`, node));
+      if (!validated && node.status === "frontier" && !reachesValidated(node.id)) findings.push(finding("red-settled", "warning", `frontier node references a proved Lean declaration ${name} with no admitted upstream`, node));
     }
   }
   return Object.freeze(findings);
