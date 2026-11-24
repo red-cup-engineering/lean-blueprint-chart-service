@@ -1,0 +1,27 @@
+{
+  "name": "@red-cup-engineering/lean-blueprint-chart-service",
+  "version": "0.0.4-dev.0",
+  "description": "Reads Lean declarations and Blueprint claim graphs for deterministic cross-surface charts.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/red-cup-engineering/lean-blueprint-chart-service.git"
+  },
+  "type": "module",
+  "license": "MIT",
+  "exports": "./src/lean-blueprint-chart.mjs",
+  "files": [
+    "src/",
+    "README.md"
+  ],
+  "scripts": {
+    "check": "node --check src/lean-blueprint-chart.mjs",
+    "verify": "npm run check && npm pack --dry-run --ignore-scripts --loglevel=error"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "funding": {
+    "type": "individual",
+    "url": "https://github.com/561-group/.github/blob/main/TIPS.md"
+  }
+}
